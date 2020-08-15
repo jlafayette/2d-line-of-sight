@@ -108,7 +108,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			color.RGBA{200, 200, 10, 255}, // color
 		)
 	}
-	fmt.Printf("%d total edges\n", len(g.tilemap.edges))
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", len(g.tilemap.edges)), 10, 10)
 }
 
 // Layout accepts the window size on desktop as the outside size, and return's

@@ -65,26 +65,23 @@ func (t *TileMap) CalculateEdges() {
 			t.m[x][y].edgeExist[3] = false
 		}
 	}
-	// for i := range t.edges {
-	// 	t.edges[i] = Edge{}
-	// }
-	t.edges = nil
+	// Reset edges list but keep capacity
+	t.edges = t.edges[:0]
+
+	var nn, sn, en, wn tile
 
 	for x := 0; x < len(t.m); x++ {
 		for y := 0; y < len(t.m[x]); y++ {
 
-			// handle edges
-			// x == 0 || y == 0
-			// x == len(t.m)-1 || y == len(t.m[x])
-
+			// define neighboring tiles with special cases for the edge tiles
+			// nn: north neighbor
+			// sn: south neighbor
+			// en: east neighbor
+			// wn: west neighbor
 			if t.m[x][y].exist {
-				var nn, sn, en, wn tile
 				if y > 0 {
 					nn = t.m[x][y-1]
 				} else {
-					// edgeID    [4]int
-					// edgeExist [4]bool
-					// exist     bool
 					nn = tile{}
 					nn.exist = true
 				}
@@ -107,12 +104,11 @@ func (t *TileMap) CalculateEdges() {
 					wn.exist = true
 				}
 
-				// add edges for all directions
+				// add or extend neighboring edges for all directions.
 
 				// handle north edge
 				if !nn.exist {
 					// check if west neighbor has a north edge to extend
-					// fmt.Printf("[%d][%d].edgeExist[%d] = %v\n", x, y-1, n, wn.edgeExist[n])
 					if wn.edgeExist[n] {
 						// extend edge
 						t.edges[wn.edgeID[n]].End.X += tilesize
@@ -126,11 +122,8 @@ func (t *TileMap) CalculateEdges() {
 						}
 						t.edges = append(t.edges, e1)
 						t.m[x][y].edgeID[n] = len(t.edges) - 1
-						// fmt.Printf("[%d][%d].edgeID[%d] = %d\n", x, y, n, len(t.edges)-1)
 						t.m[x][y].edgeExist[n] = true
 					}
-				} else {
-					t.m[x][y].edgeExist[n] = false
 				}
 
 				if !sn.exist {
@@ -150,8 +143,6 @@ func (t *TileMap) CalculateEdges() {
 						t.m[x][y].edgeExist[s] = true
 					}
 
-				} else {
-					t.m[x][y].edgeExist[s] = false
 				}
 
 				if !en.exist {
@@ -162,19 +153,14 @@ func (t *TileMap) CalculateEdges() {
 						t.m[x][y].edgeExist[e] = true
 					} else {
 						// add east edge
-						// e3 := Edge{
-						// 	Point{x*tilesize + tilesize, y * tilesize},
-						// 	Point{x*tilesize + tilesize, y*tilesize + tilesize},
-						// }
-						t.edges = append(t.edges, Edge{
+						e3 := Edge{
 							Point{x*tilesize + tilesize, y * tilesize},
 							Point{x*tilesize + tilesize, y*tilesize + tilesize},
-						})
+						}
+						t.edges = append(t.edges, e3)
 						t.m[x][y].edgeID[e] = len(t.edges) - 1
 						t.m[x][y].edgeExist[e] = true
 					}
-				} else {
-					t.m[x][y].edgeExist[e] = false
 				}
 
 				if !wn.exist {
@@ -193,8 +179,6 @@ func (t *TileMap) CalculateEdges() {
 						t.m[x][y].edgeID[w] = len(t.edges) - 1
 						t.m[x][y].edgeExist[w] = true
 					}
-				} else {
-					t.m[x][y].edgeExist[w] = false
 				}
 			}
 		}
