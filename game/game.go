@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten"
@@ -12,12 +13,12 @@ const (
 	W = 640
 	// H is screen height
 	H = 480
-	// s is size of a tile
-	s = 20
+	// tilesize is size of a tile
+	tilesize = 20
 	// number of tiles in x direction
-	nx = W / s
+	nx = W / tilesize
 	// number of tiles in y direction
-	ny = H / s
+	ny = H / tilesize
 )
 
 // Game implements ebiten.Game interface and stores the game state.
@@ -28,15 +29,12 @@ const (
 //	Draw
 //	Layout
 type Game struct {
-	tilemap [][]bool
+	tilemap *TileMap
 }
 
 // NewGame creates a new Game
 func NewGame() *Game {
-	tilemap := make([][]bool, nx)
-	for i := range tilemap {
-		tilemap[i] = make([]bool, ny)
-	}
+	tilemap := NewTileMap(nx, ny)
 	return &Game{tilemap}
 }
 
@@ -44,11 +42,11 @@ func NewGame() *Game {
 func (g *Game) Update(screen *ebiten.Image) error {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := tilemapIndexOfCursor()
-		g.tilemap[x][y] = true
+		g.tilemap.Set(x, y, true)
 	}
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
 		x, y := tilemapIndexOfCursor()
-		g.tilemap[x][y] = false
+		g.tilemap.Set(x, y, false)
 	}
 	return nil
 }
@@ -56,7 +54,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 // Get tilemap x and y indexes of the mouse cursor
 func tilemapIndexOfCursor() (int, int) {
 	mx, my := ebiten.CursorPosition()
-	return mx / s, my / s
+	return mx / tilesize, my / tilesize
 }
 
 // Draw is called every frame. The frame frequency depends on the display's
@@ -65,13 +63,52 @@ func tilemapIndexOfCursor() (int, int) {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Clear()
 
-	for x := range g.tilemap {
-		for y := range g.tilemap[x] {
-			if g.tilemap[x][y] {
-				ebitenutil.DrawRect(screen, float64(x*s), float64(y*s), s, s, color.RGBA{100, 100, 100, 255})
+	// Draw tiles
+	for x := range g.tilemap.m {
+		for y := range g.tilemap.m[x] {
+			if g.tilemap.Get(x, y) {
+				ebitenutil.DrawRect(
+					screen,                         // what to draw on
+					float64(x*tilesize),            // x pos
+					float64(y*tilesize),            // y pos
+					tilesize,                       // width
+					tilesize,                       // height
+					color.RGBA{100, 100, 100, 255}, // color
+				)
 			}
 		}
 	}
+	// Draw edges
+	for _, e := range g.tilemap.edges {
+		// Draw orange lines for the edges
+		ebitenutil.DrawLine(
+			screen,                        // what to draw on
+			float64(e.Start.X),            // x1
+			float64(e.Start.Y),            // y1
+			float64(e.End.X),              // x2
+			float64(e.End.Y),              // y2
+			color.RGBA{200, 120, 10, 255}, // color
+		)
+		// Draw red square at the start
+		ebitenutil.DrawRect(
+			screen,                       // what to draw on
+			float64(e.Start.X)-2,         // x pos
+			float64(e.Start.Y)-2,         // y pos
+			4,                            // width
+			4,                            // height
+			color.RGBA{200, 10, 10, 255}, // color
+		)
+		// Draw smaller yellow square at the end.
+		ebitenutil.DrawRect(
+			screen,                        // what to draw on
+			float64(e.End.X)-1,            // x pos
+			float64(e.End.Y)-1,            // y pos
+			2,                             // width
+			2,                             // height
+			color.RGBA{200, 200, 10, 255}, // color
+		)
+	}
+	fmt.Printf("%d total edges\n", len(g.tilemap.edges))
 }
 
 // Layout accepts the window size on desktop as the outside size, and return's
