@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/jlafayette/2d-line-of-sight/tilemap"
 )
 
 const (
@@ -29,12 +30,12 @@ const (
 //	Draw
 //	Layout
 type Game struct {
-	tilemap *TileMap
+	tilemap *tilemap.TileMap
 }
 
 // NewGame creates a new Game
 func NewGame() *Game {
-	tilemap := NewTileMap(nx, ny)
+	tilemap := tilemap.NewTileMap(nx, ny, tilesize)
 	return &Game{tilemap}
 }
 
@@ -64,8 +65,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Clear()
 
 	// Draw tiles
-	for x := range g.tilemap.m {
-		for y := range g.tilemap.m[x] {
+	for x := range g.tilemap.Tiles {
+		for y := range g.tilemap.Tiles[x] {
 			if g.tilemap.Get(x, y) {
 				ebitenutil.DrawRect(
 					screen,                         // what to draw on
@@ -79,7 +80,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 	// Draw edges
-	for _, e := range g.tilemap.edges {
+	for _, e := range g.tilemap.Edges {
 		// Draw orange lines for the edges
 		ebitenutil.DrawLine(
 			screen,                        // what to draw on
@@ -108,7 +109,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			color.RGBA{200, 200, 10, 255}, // color
 		)
 	}
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", len(g.tilemap.edges)), 10, 10)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d", len(g.tilemap.Edges)), 10, 10)
 }
 
 // Layout accepts the window size on desktop as the outside size, and return's

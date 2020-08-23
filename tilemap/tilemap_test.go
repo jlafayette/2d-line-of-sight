@@ -1,4 +1,4 @@
-package game
+package tilemap
 
 import (
 	"math/rand"
@@ -12,12 +12,18 @@ type mutation struct {
 	value bool
 }
 
+const (
+	testNumX     = 32
+	testNumY     = 24
+	testTilesize = 20
+)
+
 func tilemapMutations(num int) []mutation {
 	rand.Seed(time.Now().UnixNano())
 	m := make([]mutation, num)
 	for i := 0; i < num; i++ {
-		m[i].x = rand.Intn(nx)
-		m[i].y = rand.Intn(ny)
+		m[i].x = rand.Intn(testNumX)
+		m[i].y = rand.Intn(testNumY)
 		m[i].value = rand.Intn(2) == 0
 	}
 	return m
@@ -25,7 +31,7 @@ func tilemapMutations(num int) []mutation {
 
 func BenchmarkTileMap_CalculateEdges(b *testing.B) {
 
-	tilemap := NewTileMap(nx, ny)
+	tilemap := NewTileMap(testNumX, testNumY, testTilesize)
 	mutations := tilemapMutations(1000)
 	startMut := tilemapMutations(100)
 	for j := range startMut {

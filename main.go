@@ -13,7 +13,7 @@ func main() {
 	// or stretching will occur.
 	ebiten.SetWindowSize(game.W, game.H)
 
-	ebiten.SetWindowTitle("Edges from Tilemap")
+	ebiten.SetWindowTitle("2D Line of Sight")
 	game := game.NewGame()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
