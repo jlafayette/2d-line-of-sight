@@ -23,19 +23,13 @@ const (
 )
 
 // Game implements ebiten.Game interface and stores the game state.
-//
-// The methods run in the following order (each one is run once in this order
-// if fps is 60 and display is 60 Hz):
-//	Update
-//	Draw
-//	Layout
 type Game struct {
 	tilemap *tilemap.TileMap
 }
 
 // NewGame creates a new Game
 func NewGame() *Game {
-	tilemap := tilemap.NewTileMap(nx, ny, tilesize)
+	tilemap := tilemap.NewTileMap(nx, ny, tilesize, true)
 	return &Game{tilemap}
 }
 
@@ -43,11 +37,11 @@ func NewGame() *Game {
 func (g *Game) Update(screen *ebiten.Image) error {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := tilemapIndexOfCursor()
-		g.tilemap.Set(x, y, true)
+		g.tilemap.Set(x, y, false)
 	}
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
 		x, y := tilemapIndexOfCursor()
-		g.tilemap.Set(x, y, false)
+		g.tilemap.Set(x, y, true)
 	}
 	return nil
 }

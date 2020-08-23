@@ -33,10 +33,13 @@ type TileMap struct {
 }
 
 // NewTileMap creates a new TileMap with the given width and height.
-func NewTileMap(nx, ny, tilesize int) *TileMap {
+func NewTileMap(nx, ny, tilesize int, exist bool) *TileMap {
 	tilemap := make([][]tile, nx)
 	for i := range tilemap {
 		tilemap[i] = make([]tile, ny)
+		for j := range tilemap[i] {
+			tilemap[i][j].exist = exist
+		}
 	}
 	return &TileMap{tilemap, make([]Edge, 0, 512), tilesize}
 }
