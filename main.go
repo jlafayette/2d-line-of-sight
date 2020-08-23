@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten"
-	"github.com/jlafayette/edges-from-tilemap/game"
+	"github.com/jlafayette/2d-line-of-sight/game"
 )
 
 func main() {

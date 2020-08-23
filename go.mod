@@ -1,4 +1,4 @@
-module github.com/jlafayette/edges-from-tilemap
+module github.com/jlafayette/2d-line-of-sight
 
 go 1.14
 
