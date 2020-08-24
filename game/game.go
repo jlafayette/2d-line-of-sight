@@ -14,11 +14,11 @@ import (
 
 const (
 	// W is screen width
-	W = 640
+	W = 1280
 	// H is screen height
-	H = 480
+	H = 960
 	// tilesize is size of a tile
-	tilesize = 20
+	tilesize = 40
 	// number of tiles in x direction
 	nx = W / tilesize
 	// number of tiles in y direction
@@ -41,9 +41,9 @@ func newVisPolyPoint(x, y, angle float64) visPolyPoint {
 	return v
 }
 
-// map angle (radians) to the hue of the color 0-360
+// map angle (radians -Pi..Pi) to the hue of the color (0..360)
 func (v *visPolyPoint) calculateColor() {
-	h := v.angle * (180 / math.Pi)
+	h := (v.angle + math.Pi) * (180 / math.Pi)
 	v.color = colorful.Hsv(h, 1.0, 1.0)
 }
 
@@ -61,17 +61,15 @@ func (v visPolyPoints) Swap(i, j int) {
 
 // Game implements ebiten.Game interface and stores the game state.
 type Game struct {
-	tilemap     *tilemap.TileMap
-	visPoints   visPolyPoints
-	debugAngles []float64
+	tilemap   *tilemap.TileMap
+	visPoints visPolyPoints
 }
 
 // NewGame creates a new Game
 func NewGame() *Game {
 	tilemap := tilemap.NewTileMap(nx, ny, tilesize, true)
 	visPts := make([]visPolyPoint, 0, 1024)
-	debugAngles := make([]float64, 0, 1024)
-	return &Game{tilemap, visPts, debugAngles}
+	return &Game{tilemap, visPts}
 }
 
 // Update function is called every tick and updates the game's logical state.
@@ -95,7 +93,6 @@ func (g *Game) Update(screen *ebiten.Image) error {
 func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 	// Clear points (but keep capacity)
 	g.visPoints = g.visPoints[:0]
-	g.debugAngles = g.debugAngles[:0]
 
 	// Iterate over edges and cast rays to start and end of each.
 	for _, edge := range g.tilemap.Edges {
@@ -112,12 +109,7 @@ func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 				rayX = float64(edge.End.X) - ox
 				rayY = float64(edge.End.Y) - oy
 			}
-			baseAng = math.Atan(rayY / rayX)
-			if rayX < 0 {
-				baseAng = baseAng + math.Pi
-			}
-
-			g.debugAngles = append(g.debugAngles, baseAng)
+			baseAng = math.Atan2(rayY, rayX)
 
 			// For each point, cast 3 rays, 1 directly at the point
 			// and 1 a little bit to either side.
@@ -160,12 +152,7 @@ func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 								minT1 = t1
 								minPx = ox + rayX*t1
 								minPy = oy + rayY*t1
-								// Not sure why this works, but it checks out...
-								minAng = math.Atan((minPy - oy) / (minPx - ox))
-								if minPx-ox < 0 {
-									minAng = minAng + math.Pi
-								}
-								minAng = minAng + halfPi
+								minAng = math.Atan2(minPy-oy, minPx-ox)
 							}
 						}
 					}
@@ -255,27 +242,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		)
 	}
 
-	// // Draw debug rays
-	// for _, ang := range g.debugAngles {
-	// 	r := 200.0
-	// 	rayX := math.Cos(ang)
-	// 	rayY := math.Sin(ang)
-	// 	px := mxf + rayX*r
-	// 	py := myf + rayY*r
-	// 	ebitenutil.DrawLine(
-	// 		screen,                       // what to draw on
-	// 		mxf,                          // x1
-	// 		myf,                          // y1
-	// 		px,                           // x2
-	// 		py,                           // y2
-	// 		color.RGBA{10, 10, 200, 255}, // color
-	// 	)
-	// }
-
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("edges: %d", len(g.tilemap.Edges)), 10, 10)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("rays: %d", len(g.visPoints)), 10, 30)
 
-	// ebitenutil.DebugPrintAt(screen, fmt.Sprintf("debug angles: %v", g.debugAngles), 10, 50)
 	if len(g.visPoints) > 0 {
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("angle: %.2f", g.visPoints[0].angle), 10, 50)
 	}
