@@ -9,6 +9,7 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/jlafayette/2d-line-of-sight/tilemap"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 const (
@@ -22,6 +23,9 @@ const (
 	nx = W / tilesize
 	// number of tiles in y direction
 	ny = H / tilesize
+	// Extra Pi constants
+	halfPi   = math.Pi / 2
+	doublePi = math.Pi * 2
 )
 
 type visPolyPoint struct {
@@ -37,11 +41,10 @@ func newVisPolyPoint(x, y, angle float64) visPolyPoint {
 	return v
 }
 
+// map angle (radians) to the hue of the color 0-360
 func (v *visPolyPoint) calculateColor() {
-	// Result := ((Input - InputLow) / (InputHigh - InputLow))
-	//   * (OutputHigh - OutputLow) + OutputLow;
-	c := ((v.angle-0.0)/(math.Pi*2-0.0))*(255.0-0.0) + 0.0
-	v.color = color.RGBA{uint8(c), uint8(c), uint8(c), 255}
+	h := v.angle * (180 / math.Pi)
+	v.color = colorful.Hsv(h, 1.0, 1.0)
 }
 
 type visPolyPoints []visPolyPoint
@@ -157,10 +160,12 @@ func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 								minT1 = t1
 								minPx = ox + rayX*t1
 								minPy = oy + rayY*t1
+								// Not sure why this works, but it checks out...
 								minAng = math.Atan((minPy - oy) / (minPx - ox))
 								if minPx-ox < 0 {
 									minAng = minAng + math.Pi
 								}
+								minAng = minAng + halfPi
 							}
 						}
 					}
@@ -271,6 +276,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("rays: %d", len(g.visPoints)), 10, 30)
 
 	// ebitenutil.DebugPrintAt(screen, fmt.Sprintf("debug angles: %v", g.debugAngles), 10, 50)
+	if len(g.visPoints) > 0 {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("angle: %.2f", g.visPoints[0].angle), 10, 50)
+	}
 }
 
 // Layout accepts the window size on desktop as the outside size, and return's
