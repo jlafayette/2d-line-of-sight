@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"sort"
 
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -27,21 +28,47 @@ type visPolyPoint struct {
 	x     float64
 	y     float64
 	angle float64
+	color color.Color
+}
+
+func newVisPolyPoint(x, y, angle float64) visPolyPoint {
+	v := visPolyPoint{x, y, angle, color.RGBA{200, 200, 10, 255}}
+	v.calculateColor()
+	return v
+}
+
+func (v *visPolyPoint) calculateColor() {
+	// Result := ((Input - InputLow) / (InputHigh - InputLow))
+	//   * (OutputHigh - OutputLow) + OutputLow;
+	c := ((v.angle-0.0)/(math.Pi*2-0.0))*(255.0-0.0) + 0.0
+	v.color = color.RGBA{uint8(c), uint8(c), uint8(c), 255}
+}
+
+type visPolyPoints []visPolyPoint
+
+func (v visPolyPoints) Len() int {
+	return len(v)
+}
+func (v visPolyPoints) Less(i, j int) bool {
+	return v[i].angle < v[j].angle
+}
+func (v visPolyPoints) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
 }
 
 // Game implements ebiten.Game interface and stores the game state.
 type Game struct {
-	tilemap       *tilemap.TileMap
-	visPolyPoints []visPolyPoint
-	debugAngles   []float64
+	tilemap     *tilemap.TileMap
+	visPoints   visPolyPoints
+	debugAngles []float64
 }
 
 // NewGame creates a new Game
 func NewGame() *Game {
 	tilemap := tilemap.NewTileMap(nx, ny, tilesize, true)
-	visPolyPoints := make([]visPolyPoint, 0, 1024)
+	visPts := make([]visPolyPoint, 0, 1024)
 	debugAngles := make([]float64, 0, 1024)
-	return &Game{tilemap, visPolyPoints, debugAngles}
+	return &Game{tilemap, visPts, debugAngles}
 }
 
 // Update function is called every tick and updates the game's logical state.
@@ -64,10 +91,10 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 	// Clear points (but keep capacity)
-	g.visPolyPoints = g.visPolyPoints[:0]
+	g.visPoints = g.visPoints[:0]
 	g.debugAngles = g.debugAngles[:0]
 
-	// iterate over edges
+	// Iterate over edges and cast rays to start and end of each.
 	for _, edge := range g.tilemap.Edges {
 		// g.tilemap.Edges[i].Start
 
@@ -139,11 +166,14 @@ func (g *Game) calculateVisbilityPolygon(ox, oy, radius float64) {
 					}
 				}
 				if minT1 < math.Inf(1) {
-					g.visPolyPoints = append(g.visPolyPoints, visPolyPoint{minPx, minPy, minAng})
+					g.visPoints = append(g.visPoints, newVisPolyPoint(minPx, minPy, minAng))
 				}
 			}
 		}
 	}
+
+	// Sort points by angle
+	sort.Sort(g.visPoints)
 }
 
 // Get tilemap x and y indexes of the mouse cursor
@@ -208,15 +238,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	mx, my := ebiten.CursorPosition()
 	mxf := float64(mx)
 	myf := float64(my)
-	for _, pt := range g.visPolyPoints {
+	for _, pt := range g.visPoints {
 		// Draw yellow line from origin to the point
 		ebitenutil.DrawLine(
-			screen,                        // what to draw on
-			mxf,                           // x1
-			myf,                           // y1
-			pt.x,                          // x2
-			pt.y,                          // y2
-			color.RGBA{200, 200, 10, 255}, // color
+			screen,   // what to draw on
+			mxf,      // x1
+			myf,      // y1
+			pt.x,     // x2
+			pt.y,     // y2
+			pt.color, // color
 		)
 	}
 
@@ -238,7 +268,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// }
 
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("edges: %d", len(g.tilemap.Edges)), 10, 10)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("rays: %d", len(g.visPolyPoints)), 10, 30)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("rays: %d", len(g.visPoints)), 10, 30)
 
 	// ebitenutil.DebugPrintAt(screen, fmt.Sprintf("debug angles: %v", g.debugAngles), 10, 50)
 }
