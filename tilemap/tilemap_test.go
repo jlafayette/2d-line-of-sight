@@ -31,7 +31,7 @@ func tilemapMutations(num int) []mutation {
 
 func BenchmarkTileMap_CalculateEdges(b *testing.B) {
 
-	tilemap := NewTileMap(testNumX, testNumY, testTilesize)
+	tilemap := NewTileMap(testNumX, testNumY, testTilesize, false)
 	mutations := tilemapMutations(1000)
 	startMut := tilemapMutations(100)
 	for j := range startMut {
@@ -39,10 +39,11 @@ func BenchmarkTileMap_CalculateEdges(b *testing.B) {
 		tilemap.CalculateEdges()
 	}
 	b.ResetTimer()
+	j := 0
 	for i := 0; i < b.N; i++ {
-		for j := range mutations {
-			tilemap.Set(mutations[j].x, mutations[j].y, mutations[j].value)
-			tilemap.CalculateEdges()
-		}
+		j = i % len(mutations)
+		tilemap.Set(mutations[j].x, mutations[j].y, mutations[j].value)
+		tilemap.CalculateEdges()
 	}
+
 }

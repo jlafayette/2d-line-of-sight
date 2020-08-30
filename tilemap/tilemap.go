@@ -41,12 +41,17 @@ func NewTileMap(nx, ny, tilesize int, exist bool) *TileMap {
 			tilemap[i][j].exist = exist
 		}
 	}
-	return &TileMap{tilemap, make([]Edge, 0, 512), tilesize}
+	t := TileMap{tilemap, make([]Edge, 0, 512), tilesize}
+	t.CalculateEdges()
+	return &t
 }
 
 // Get a tile's exist value at the given x and y coordinate.
 func (t *TileMap) Get(x, y int) bool {
-	return t.Tiles[x][y].exist
+	if x < len(t.Tiles) && x >= 0 && y < len(t.Tiles[0]) && y >= 0 {
+		return t.Tiles[x][y].exist
+	}
+	return false
 }
 
 // Set a tile's exist value at the given x and y coordinate.
@@ -57,9 +62,7 @@ func (t *TileMap) Set(x, y int, value bool) {
 			t.Tiles[x][y].exist = value
 			t.CalculateEdges()
 		}
-	} // else {
-	// 	fmt.Printf("%d, %d is out of bounds\n", x, y)
-	// }
+	}
 }
 
 // CalculateEdges populates the slice of edges based on the existing tiles.
@@ -79,6 +82,21 @@ func (t *TileMap) CalculateEdges() {
 	}
 	// Reset edges list but keep capacity
 	t.Edges = t.Edges[:0]
+
+	// border edges
+	var top, left, right, bottom Edge
+	top.Start = Point{0, 0}
+	top.End = Point{len(t.Tiles) * t.tilesize, 0}
+	left.Start = Point{0, 0}
+	left.End = Point{0, len(t.Tiles[0]) * t.tilesize}
+	right.Start = Point{len(t.Tiles) * t.tilesize, 0}
+	right.End = Point{len(t.Tiles) * t.tilesize, len(t.Tiles[0]) * t.tilesize}
+	bottom.Start = Point{0, len(t.Tiles[0]) * t.tilesize}
+	bottom.End = Point{len(t.Tiles) * t.tilesize, len(t.Tiles[0]) * t.tilesize}
+	t.Edges = append(t.Edges, top)
+	t.Edges = append(t.Edges, left)
+	t.Edges = append(t.Edges, right)
+	t.Edges = append(t.Edges, bottom)
 
 	var nn, sn, en, wn tile
 
