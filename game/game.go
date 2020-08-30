@@ -172,14 +172,15 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	// cast rays
-	g.calculateVisbilityPolygon(1000)
+	g.calculateVisbilityPolygon()
 
 	return nil
 }
 
-func (g *Game) calculateVisbilityPolygon(radius float64) {
+func (g *Game) calculateVisbilityPolygon() {
 	ox := float64(g.mx)
 	oy := float64(g.my)
+	radius := 1000.0
 	// Clear points (but keep capacity)
 	g.visPoints = g.visPoints[:0]
 
